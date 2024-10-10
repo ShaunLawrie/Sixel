@@ -5,7 +5,7 @@ namespace Sixel;
 
 [Cmdlet(VerbsData.ConvertTo, "Sixel", DefaultParameterSetName = "Path")]
 [Alias("cts")]
-[OutputType(typeof(string))]
+[OutputType(typeof(string[]))]
 public sealed class ConvertSixelCmdlet : PSCmdlet
 {
   [Parameter(
@@ -43,6 +43,12 @@ public sealed class ConvertSixelCmdlet : PSCmdlet
         HelpMessage = "Force the command to attempt to output sixel data even if the terminal does not support sixel."
   )]
   public SwitchParameter Force { get; set; }
+
+  [Parameter(
+        HelpMessage = "Get the frames of a gif as an array of sixel strings."
+  )]
+  public SwitchParameter AllFrames { get; set; }
+
   protected override void BeginProcessing()
   {
     if (Compatibility.TerminalSupportsSixel() == false && Force == false)
@@ -72,11 +78,11 @@ public sealed class ConvertSixelCmdlet : PSCmdlet
       var resolvedPath = this.SessionState.Path.GetResolvedPSPathFromPSPath(Path)[0].Path;
       if (Width > 0)
       {
-        WriteObject(Sixel.Convert.ImgToSixel(resolvedPath, MaxColors, Width));
+        WriteObject(Sixel.Convert.ImgToSixel(resolvedPath, MaxColors, AllFrames, Width));
       }
       else
       {
-        WriteObject(Sixel.Convert.ImgToSixel(resolvedPath, MaxColors));
+        WriteObject(Sixel.Convert.ImgToSixel(resolvedPath, MaxColors, AllFrames));
       }
     }
     catch (Exception ex)

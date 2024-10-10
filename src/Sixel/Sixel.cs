@@ -62,36 +62,64 @@ public class Convert
   {
     MaxColors = 256
   };
-  public static string ImgToSixel(string filename, int maxColors)
+  public static string[] ImgToSixel(string filename, int maxColors, bool allFrames)
   {
+    var frames = new List<string>();
+
     // we always need to mutate the colors.. but maybe not always width.
     try
     {
       using var image = LoadImage(filename);
       MutateColors(image, maxColors);
-      RenderImage(image);
-      return SixelBuilder.ToString();
+
+      foreach (var frame in image.Frames)
+      {
+        RenderImage(frame);
+        frames.Add(SixelBuilder.ToString());
+        SixelBuilder.Clear();
+        if (!allFrames)
+        {
+          break;
+        }
+      }
+
     }
     finally
     {
       SixelBuilder.Clear();
     }
+    
+    return [.. frames];
   }
-  public static string ImgToSixel(string filename, int maxColors, int cellWidth)
+
+  public static string[] ImgToSixel(string filename, int maxColors, bool allFrames, int cellWidth)
   {
     var pixelWidth = cellWidth * Compatibility.GetCellSize().PixelWidth;
+    var frames = new List<string>();
     try
     {
       using var image = LoadImage(filename);
       int scaledHeight = (int)Math.Round((double)image.Height / image.Width * pixelWidth);
       MutateSizeAndColors(image, pixelWidth, scaledHeight, maxColors);
-      RenderImage(image);
-      return SixelBuilder.ToString();
+
+      foreach (var frame in image.Frames)
+      {
+        RenderImage(frame);
+        frames.Add(SixelBuilder.ToString());
+        SixelBuilder.Clear();
+        if (!allFrames)
+        {
+          break;
+        }
+      }
+
     }
     finally
     {
       SixelBuilder.Clear();
     }
+
+    return [.. frames];
   }
   private static void MutateSizeAndColors(Image<Rgba32> image, int width, int scaledHeight, int maxColors)
   {
@@ -116,7 +144,8 @@ public class Convert
   {
     return Image.Load<Rgba32>(filename);
   }
-  private static void RenderImage(Image<Rgba32> image)
+
+  private static void RenderImage(ImageFrame<Rgba32> image)
   {
     Dictionary<Rgba32, int> palette = new();
     int colorCounter = 1;
